@@ -85,13 +85,29 @@ def fetch_commits():
     return commit_list
 
 
+# todo: once option parsing is implemented, user should be able to chose whether they want to filter for blobs or trees
+def filter_list():
+    for committer, files in commits:
+        updatedFiles = []
+        for path, type in files:
+            if type == "blob":
+                updatedFiles.append((path, type))
+        if updatedFiles != {}:
+            updatedCommits.append((committer, updatedFiles))
+
+
 if __name__ == '__main__':
-    repository = "https://github.com/karolinespohn/Notes"
+    repository = "https://github.com/nvim-lua/completion-nvim"
     owner = repository.split("/")[3]
     repo = repository.split("/")[4]
     commits = fetch_commits()
     count = 0
-    for commit in commits:
-        count += 1
-        print(commit)
+    updatedCommits = []
+
+
+
+    # for file in updatedCommits:
+    #     print(file)
+
+
     print(count)

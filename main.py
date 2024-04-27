@@ -31,10 +31,19 @@ def fetch_commits():
                         }}
                     edges {{
                       node {{
-                        oid
                         committer {{
                             name
                         }}
+                        file(path:"/") {{
+                            object{{
+                              ... on Tree{{
+                                entries{{
+                                  path
+                                  type
+                                }}
+                              }}
+                            }}
+                          }}
                       }}
                     }}
                   }}
@@ -49,9 +58,18 @@ def fetch_commits():
         if response.status_code == 200:
             data = response.json()
 
-            if data.get("data") and data.get("data").get("repository").get("defaultBranchRef").get("target") is not None:
-                nodes = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).get("target", {}).get("history", {}).get("edges", {})
-                commit_list.extend([(node["node"]["oid"], node["node"]["committer"]["name"])] for node in nodes)
+            if data.get("data") and data.get("data").get("repository").get("defaultBranchRef").get(
+                    "target") is not None:
+                nodes = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).get("target", {}).get(
+                    "history", {}).get("edges", {})
+                commit_list.extend([
+                    (
+                        node.get("node").get("committer").get("name"),
+                        [(entry.get("path"), entry.get("type")) for entry in
+                         node.get("node").get("file", {}).get("object", {}).get("entries", [])]
+                    )
+                    for node in nodes
+                ])
 
                 page_info = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).get("target", {}).get("history", {}).get("pageInfo")
                 if page_info is None:
@@ -68,12 +86,12 @@ def fetch_commits():
 
 
 if __name__ == '__main__':
-    repository = "https://github.com/neovim/nvim-lspconfig"
+    repository = "https://github.com/karolinespohn/Notes"
     owner = repository.split("/")[3]
     repo = repository.split("/")[4]
     commits = fetch_commits()
     count = 0
     for commit in commits:
-        count += 1;
-
-
+        count += 1
+        print(commit)
+    print(count)

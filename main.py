@@ -2,11 +2,8 @@ import os
 import requests
 import dotenv
 
-dotenv.load_dotenv()
-token = os.getenv("GITHUB_API_TOKEN")
 
-
-def fetch_commits():
+def fetch_commits(owner, repo, token):
     has_next_page = True  # in one query, graphql only returns 100 commits at most, this ensures flipping through pages
     end_cursor = None
     commit_list = []
@@ -31,19 +28,10 @@ def fetch_commits():
                         }}
                     edges {{
                       node {{
+                        oid
                         committer {{
                             name
                         }}
-                        file(path:"/") {{
-                            object{{
-                              ... on Tree{{
-                                entries{{
-                                  path
-                                  type
-                                }}
-                              }}
-                            }}
-                          }}
                       }}
                     }}
                   }}
@@ -58,18 +46,13 @@ def fetch_commits():
         if response.status_code == 200:
             data = response.json()
 
-            if data.get("data") and data.get("data").get("repository").get("defaultBranchRef").get(
-                    "target") is not None:
-                nodes = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).get("target", {}).get(
-                    "history", {}).get("edges", {})
-                commit_list.extend([
-                    (
-                        node.get("node").get("committer").get("name"),
-                        [(entry.get("path"), entry.get("type")) for entry in
-                         node.get("node").get("file", {}).get("object", {}).get("entries", [])]
-                    )
-                    for node in nodes
-                ])
+            if data.get("data") and data.get("data").get("repository").get("defaultBranchRef").get("target") is not None:
+
+                nodes = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).get("target", {}).get("history", {}).get("edges", {})
+
+                for node in nodes:
+                    commit_list.extend([(node.get("node").get("oid"), node.get("node").get("committer").get("name"))])
+
 
                 page_info = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).get("target", {}).get("history", {}).get("pageInfo")
                 if page_info is None:
@@ -85,29 +68,37 @@ def fetch_commits():
     return commit_list
 
 
-# todo: once option parsing is implemented, user should be able to chose whether they want to filter for blobs or trees
-def filter_list():
-    for committer, files in commits:
-        updatedFiles = []
-        for path, type in files:
-            if type == "blob":
-                updatedFiles.append((path, type))
-        if updatedFiles != {}:
-            updatedCommits.append((committer, updatedFiles))
+def get_corresponding_files(commits, owner, repo, token):
+    headers = {
+        "Authorization": f"bearer {token}",
+    }
+    committer_file_list = []
+
+    for (sha, committer) in commits:
+        response = requests.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{sha}", headers=headers)
+
+        if response.status_code == 200:
+            commit_data = response.json()
+            files = commit_data.get("files", [])
+
+            for file in files:
+                committer_file_list.append((committer, file["filename"]))
+        else:
+            print(f"{response.status_code} Error: {response.text}")
+
+    return committer_file_list
 
 
 if __name__ == '__main__':
-    repository = "https://github.com/nvim-lua/completion-nvim"
+    dotenv.load_dotenv()
+    token = os.getenv("GITHUB_API_TOKEN")
+
+    repository = "https://github.com/karolinespohn/Notes"
     owner = repository.split("/")[3]
     repo = repository.split("/")[4]
-    commits = fetch_commits()
-    count = 0
-    updatedCommits = []
+
+    commits = fetch_commits(owner, repo, token)
+    committer_file_list = get_corresponding_files(commits, owner, repo, token)
+    print(committer_file_list)
 
 
-
-    # for file in updatedCommits:
-    #     print(file)
-
-
-    print(count)

@@ -1,6 +1,7 @@
 import os
 import requests
 import dotenv
+from collections import defaultdict
 
 
 def fetch_commits(owner, repo, token):
@@ -75,6 +76,9 @@ def get_corresponding_files(commits, owner, repo, token):
     committer_file_list = []
 
     for (sha, committer) in commits:
+        if committer == "GitHub": # todo: enable option to include commits by github
+            continue
+
         response = requests.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{sha}", headers=headers)
 
         if response.status_code == 200:
@@ -89,14 +93,58 @@ def get_corresponding_files(commits, owner, repo, token):
     return committer_file_list
 
 
+def set_up_map(commits):
+    file_contributors_map = defaultdict(lambda: defaultdict(int))
+    for committer, file in commits:
+        file_contributors_map[file][committer] += 1
+    return file_contributors_map
+
+
+"""
+for each file and pair of contributors a and b, the minimum of commits to that file by either a or b is added to a count
+of their shared commits
+"""
+def get_max_pair(file_to_committers_map):
+    dev_pairs = defaultdict(int)
+    max_shared_commits = 0
+    max_pair = (None, None)
+
+    for committers in file_to_committers_map.values():
+        sorted_committers = sorted(committers.items(), key=lambda x: x[0])
+
+        for i in range(len(sorted_committers)):
+            for j in range (i + 1, len(sorted_committers)):
+                committer1, committer1_count = sorted_committers[i]
+                committer2, committer2_count = sorted_committers[j]
+
+                pair = (committer1, committer2)
+
+                dev_pairs[str(pair)] += min(committer1_count, committer2_count)
+
+                shared_commits = dev_pairs[str(pair)]
+
+                if shared_commits > max_shared_commits:
+                    max_pair = pair
+                    max_shared_commits = shared_commits
+
+    return max_pair
+
+
 if __name__ == '__main__':
     dotenv.load_dotenv()
     token = os.getenv("GITHUB_API_TOKEN")
 
-    repository = "https://github.com/karolinespohn/Notes"
+    repository = "https://github.com/neovim/tree-sitter-vimdoc"
     owner = repository.split("/")[3]
     repo = repository.split("/")[4]
 
     commits = fetch_commits(owner, repo, token)
     committer_file_list = get_corresponding_files(commits, owner, repo, token)
-    print(committer_file_list)
+
+    file_contributors_map = set_up_map(committer_file_list)
+    max_pair = get_max_pair(file_contributors_map)
+
+    if None in max_pair:
+        print("No pair could be found")
+    else:
+        print(f"The two developers contributing most frequently to the same files are {max_pair[0]} and {max_pair[1]}")

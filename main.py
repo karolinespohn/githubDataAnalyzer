@@ -100,5 +100,3 @@ if __name__ == '__main__':
     commits = fetch_commits(owner, repo, token)
     committer_file_list = get_corresponding_files(commits, owner, repo, token)
     print(committer_file_list)
-
-

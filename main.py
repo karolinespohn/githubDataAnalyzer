@@ -1,7 +1,8 @@
 import os
 import requests
-import dotenv
+from dotenv import load_dotenv
 from collections import defaultdict
+import argparse
 
 
 def fetch_commits(owner, repo, token):
@@ -13,6 +14,26 @@ def fetch_commits(owner, repo, token):
         "Authorization": f"bearer {token}",
         "Content-Type": "application/json"
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     while has_next_page:
         cursor = f', after: "{end_cursor}"' if end_cursor else ''
@@ -130,15 +151,10 @@ def get_max_pair(file_to_committers_map):
     return max_pair
 
 
-if __name__ == '__main__':
-    dotenv.load_dotenv()
-    token = os.getenv("GITHUB_API_TOKEN")
-
-    repository = "https://github.com/neovim/tree-sitter-vimdoc"
-    owner = repository.split("/")[3]
-    repo = repository.split("/")[4]
-
+def find_dev_pair(token, owner, repo):
+    print("Analyzing Data... This may take a while")
     commits = fetch_commits(owner, repo, token)
+
     committer_file_list = get_corresponding_files(commits, owner, repo, token)
 
     file_contributors_map = set_up_map(committer_file_list)
@@ -148,3 +164,34 @@ if __name__ == '__main__':
         print("No pair could be found")
     else:
         print(f"The two developers contributing most frequently to the same files are {max_pair[0]} and {max_pair[1]}")
+
+
+def main(args):
+    load_dotenv()
+    token = os.getenv("GITHUB_API_TOKEN")
+
+    repository = args.url
+    if "github.com/" not in repository:
+        print("URL of repository is invalid")
+        return
+
+    urlComponents = repository.split('/')
+    try:
+        owner = urlComponents[urlComponents.index("github.com") + 1]
+        repo = urlComponents[urlComponents.index("github.com") + 2]
+    except IndexError:
+        print("URL of repository is invalid")
+        return
+
+
+
+    find_dev_pair(token, owner, repo)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Find devs contributing most frequently to the same files")
+    parser.add_argument("--url", required=True, help="URL of the GitHub repository")
+
+    args = parser.parse_args()
+    main(args)
+

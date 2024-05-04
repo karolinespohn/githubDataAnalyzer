@@ -4,6 +4,7 @@ import argparse
 import data_query
 import data_structuring
 import data_analysis
+from utils import Fun
 
 
 def find_frequent_collaborators_by_commits(owner, repo, token):
@@ -35,9 +36,50 @@ def find_frequent_collaborators_by_changes(owner, repo, token):
     if len(max_pairs) == 0:
         print("No pair could be found")
     else:
-        print(f"The pair(s) of developers contributing most frequently to the same files are:")
+        print("The pair(s) of developers contributing most frequently to the same files are:")
         for pair in max_pairs:
             print(f"{pair[0]} & {pair[1]}")
+
+
+def find_devs_with_largest_commits(owner, repo, token):
+    print("---------------------------------------------------------------------------------")
+    print("Calculating developer with largest commits measured by average changes per commit")
+    print("---------------------------------------------------------------------------------")
+
+    author_changes_list = data_query.fetch_authors_changes(owner, repo, token)
+    dev_to_changes_map = data_structuring.map_dev_to_changes(author_changes_list)
+    devs_with_largest_commits = data_analysis.get_dev_with_avg_changes_extrema(dev_to_changes_map, Fun.MOST_CHANGES_PER_COMMIT)
+
+    num_devs_found = len(devs_with_largest_commits)
+
+    if num_devs_found == 0:
+        print("No developer could be found")
+    else:
+        print(f"The dev{'s' if num_devs_found > 1 else ''} with the largest commits {'are' if num_devs_found > 1 else 'is'}:")
+        for dev in devs_with_largest_commits:
+            print(dev)
+
+
+def find_devs_with_smallest_commits(owner, repo, token):
+    print("----------------------------------------------------------------------------------")
+    print("Calculating developer with smallest commits measured by average changes per commit")
+    print("----------------------------------------------------------------------------------")
+
+    author_changes_list = data_query.fetch_authors_changes(owner, repo, token)
+    dev_to_changes_map = data_structuring.map_dev_to_changes(author_changes_list)
+    devs_with_smallest_commits = data_analysis.get_dev_with_avg_changes_extrema(dev_to_changes_map,
+                                                                               Fun.LEAST_CHANGES_PER_COMMIT)
+
+    num_devs_found = len(devs_with_smallest_commits)
+
+    if num_devs_found == 0:
+        print("No developer could be found")
+    else:
+        print(
+            f"The dev{'s' if num_devs_found > 1 else ''} with the smallest commits {'are' if num_devs_found > 1 else 'is'}:")
+        for dev in devs_with_smallest_commits:
+            print(dev)
+
 
 
 def main(args):
@@ -61,11 +103,12 @@ def main(args):
         print("URL of repository is invalid")
         return
 
-    print("reached")
     match fun:
         case "1": find_frequent_collaborators_by_commits(owner, repo, token)
         case "2": find_frequent_collaborators_by_changes(owner, repo, token)
-        case _ : "Please specify, what kind of analysis you would like to perform"
+        case "3": find_devs_with_largest_commits(owner, repo, token)
+        case "4": find_devs_with_smallest_commits(owner, repo, token)
+        case _: "Please specify, what kind of analysis you would like to perform"
 
 
 if __name__ == '__main__':

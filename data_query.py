@@ -1,7 +1,12 @@
 import requests
+from enum import Enum
 
 
-def fetch_commit_oid_author(owner, repo, token):
+class Fun(Enum):
+    FREQUENT_COLLABORATORS_BY_COMMITS = 1
+
+
+def fetch_commit_data(owner, repo, token, queried_data, fun):
     has_next_page = True  # in one query, graphql only returns 100 commits at most, this ensures flipping through pages
     end_cursor = None
     commit_list = []
@@ -10,6 +15,7 @@ def fetch_commit_oid_author(owner, repo, token):
         "Authorization": f"bearer {token}",
         "Content-Type": "application/json"
     }
+
 
     while has_next_page:
         cursor = f', after: "{end_cursor}"' if end_cursor else ''
@@ -26,10 +32,7 @@ def fetch_commit_oid_author(owner, repo, token):
                         }}
                     edges {{
                       node {{
-                        oid
-                        committer {{
-                            name
-                        }}
+                        {queried_data}
                       }}
                     }}
                   }}
@@ -49,8 +52,10 @@ def fetch_commit_oid_author(owner, repo, token):
                 nodes = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).\
                     get("target", {}).get("history", {}).get("edges", {})
 
-                for node in nodes:
-                    commit_list.extend([(node.get("node").get("oid"), node.get("node").get("committer").get("name"))])
+                match fun:
+                    case Fun.FREQUENT_COLLABORATORS_BY_COMMITS:
+                        for node in nodes:
+                            commit_list.extend([(node.get("node").get("oid"), node.get("node").get("committer").get("name"))])
 
                 page_info = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).\
                     get("target", {}).get("history", {}).get("pageInfo")
@@ -92,5 +97,10 @@ def get_corresponding_files(commits, owner, repo, token):
 
 
 def fetch_commit_oid_author_files(owner, repo, token):
-    commit_oid_author = fetch_commit_oid_author(owner, repo, token)
+    queried_data = """oid
+                        committer {
+                            name
+                        }"""
+
+    commit_oid_author = fetch_commit_data(owner, repo, token, queried_data, Fun.FREQUENT_COLLABORATORS_BY_COMMITS)
     return get_corresponding_files(commit_oid_author, owner, repo, token)

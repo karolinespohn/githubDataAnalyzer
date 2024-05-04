@@ -37,20 +37,22 @@ def get_frequent_collaborators(file_to_committers_map):
     return max_pairs
 
 
-def get_dev_with_avg_changes_extrema(dev_to_changes_map, fun):
-    extreme_changes_per_commit = 0
-    devs_with_avg_changes_extrema = []
+def get_dev_with_extreme_avg(dev_to_changes_map, fun):
+    curr_extremum = 0
+    extreme_devs = []
 
     for dev in dev_to_changes_map:
         data = dev_to_changes_map[dev]
-        changes = data[2]
-        if int(changes) == extreme_changes_per_commit:
-            devs_with_avg_changes_extrema.append(dev)
-        if (fun == Fun.MOST_CHANGES_PER_COMMIT and int(changes) > extreme_changes_per_commit) or (fun == Fun.LEAST_CHANGES_PER_COMMIT and (int(changes) < extreme_changes_per_commit or extreme_changes_per_commit == 0)):
-            extreme_changes_per_commit = changes
-            devs_with_avg_changes_extrema = [dev]
+        avg = data[2]
+        if int(avg) == curr_extremum:
+            extreme_devs.append(dev)
+        if ((fun == Fun.MOST_CHANGES_PER_COMMIT or fun == Fun.LONGEST_AVG_COMMIT_MESSAGES)
+            and int(avg) > curr_extremum) \
+                or (fun == Fun.LEAST_CHANGES_PER_COMMIT and (int(avg) < curr_extremum or curr_extremum == 0)):
+            curr_extremum = avg
+            extreme_devs = [dev]
 
-    if extreme_changes_per_commit == 0:
+    if curr_extremum == 0:
         return None
 
-    return devs_with_avg_changes_extrema
+    return extreme_devs

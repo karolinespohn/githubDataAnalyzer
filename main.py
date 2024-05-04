@@ -47,8 +47,8 @@ def find_devs_with_largest_commits(owner, repo, token):
     print("---------------------------------------------------------------------------------")
 
     author_changes_list = data_query.fetch_authors_changes(owner, repo, token)
-    dev_to_changes_map = data_structuring.map_dev_to_changes(author_changes_list)
-    devs_with_largest_commits = data_analysis.get_dev_with_avg_changes_extrema(dev_to_changes_map, Fun.MOST_CHANGES_PER_COMMIT)
+    dev_to_changes_map = data_structuring.map_dev_to_avg(author_changes_list, Fun.MOST_CHANGES_PER_COMMIT)
+    devs_with_largest_commits = data_analysis.get_dev_with_extreme_avg(dev_to_changes_map, Fun.MOST_CHANGES_PER_COMMIT)
 
     num_devs_found = len(devs_with_largest_commits)
 
@@ -66,9 +66,9 @@ def find_devs_with_smallest_commits(owner, repo, token):
     print("----------------------------------------------------------------------------------")
 
     author_changes_list = data_query.fetch_authors_changes(owner, repo, token)
-    dev_to_changes_map = data_structuring.map_dev_to_changes(author_changes_list)
-    devs_with_smallest_commits = data_analysis.get_dev_with_avg_changes_extrema(dev_to_changes_map,
-                                                                               Fun.LEAST_CHANGES_PER_COMMIT)
+    dev_to_changes_map = data_structuring.map_dev_to_avg(author_changes_list, Fun.LEAST_CHANGES_PER_COMMIT)
+    devs_with_smallest_commits = data_analysis.get_dev_with_extreme_avg(dev_to_changes_map,
+                                                                        Fun.LEAST_CHANGES_PER_COMMIT)
 
     num_devs_found = len(devs_with_smallest_commits)
 
@@ -80,6 +80,26 @@ def find_devs_with_smallest_commits(owner, repo, token):
         for dev in devs_with_smallest_commits:
             print(dev)
 
+
+def find_devs_with_longest_commit_msgs(owner, repo, token):
+    print("-----------------------------------------------------------------------")
+    print("Calculating developer who on average writes the longest commit messages")
+    print("-----------------------------------------------------------------------")
+
+    author_msg_list = data_query.fetch_author_messages(owner, repo, token)
+    dev_to_msglen_map = data_structuring.map_dev_to_avg(author_msg_list, Fun.LONGEST_AVG_COMMIT_MESSAGES)
+    devs_shortest_msgs = data_analysis.get_dev_with_extreme_avg(dev_to_msglen_map,
+                                                                        Fun.LONGEST_AVG_COMMIT_MESSAGES)
+
+    num_devs_found = len(devs_shortest_msgs)
+
+    if num_devs_found == 0:
+        print("No developer could be found")
+    else:
+        print(
+            f"The dev{'s' if num_devs_found > 1 else ''} with the longest commit messages {'are' if num_devs_found > 1 else 'is'}:")
+        for dev in devs_shortest_msgs:
+            print(dev)
 
 
 def main(args):
@@ -112,7 +132,6 @@ def main(args):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(description="Find devs contributing most frequently to the same files")
     parser.add_argument("--url", required=True, help="URL of the GitHub repository")
     parser.add_argument("--ana", required=True, help="Analysis to be performed")

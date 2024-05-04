@@ -60,8 +60,8 @@ def fetch_commit_data(owner, repo, token, queried_data, fun):
                                                  node.get("node").get("deletions"))])
                     case Fun.LONGEST_AVG_COMMIT_MESSAGES:
                         for node in nodes:
-                            commit_list.extend([(node.get("node").get("message"),
-                                                 node.get("node").get("author").get("name"))])
+                            commit_list.extend([(node.get("node").get("author").get("name"),
+                                                 node.get("node").get("message"))])
 
                 page_info = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).\
                     get("target", {}).get("history", {}).get("pageInfo")

@@ -5,6 +5,7 @@ from enum import Enum
 class Fun(Enum):
     FREQUENT_COLLABORATORS_BY_COMMITS = 1
     FREQUENT_COLLABORATORS_BY_CHANGES = 2
+    MOST_CHANGES_PER_COMMIT = 3
 
 
 def fetch_commit_data(owner, repo, token, queried_data, fun):
@@ -58,6 +59,11 @@ def fetch_commit_data(owner, repo, token, queried_data, fun):
                         for node in nodes:
                             commit_list.extend([(node.get("node").get("oid"),
                                                  node.get("node").get("author").get("name"))])
+                    case Fun.MOST_CHANGES_PER_COMMIT:
+                        for node in nodes:
+                            commit_list.extend([(node.get("node").get("author").get("name"),
+                                                 node.get("node").get("additions"),
+                                                 node.get("node").get("deletions"))])
 
                 page_info = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).\
                     get("target", {}).get("history", {}).get("pageInfo")
@@ -111,8 +117,8 @@ def fetch_author_files(owner, repo, token):
                             name
                         }"""
 
-    commit_oid_author = fetch_commit_data(owner, repo, token, queried_data, Fun.FREQUENT_COLLABORATORS_BY_COMMITS)
-    return get_corresponding_files(commit_oid_author, owner, repo, token, Fun.FREQUENT_COLLABORATORS_BY_COMMITS)
+    oid_author_list = fetch_commit_data(owner, repo, token, queried_data, Fun.FREQUENT_COLLABORATORS_BY_COMMITS)
+    return get_corresponding_files(oid_author_list, owner, repo, token, Fun.FREQUENT_COLLABORATORS_BY_COMMITS)
 
 
 def fetch_author_files_changes(owner, repo, token):
@@ -120,6 +126,14 @@ def fetch_author_files_changes(owner, repo, token):
                            author {
                                name
                            }"""
-    commit_oid_author_loc = fetch_commit_data(owner, repo, token, queried_data, Fun.FREQUENT_COLLABORATORS_BY_CHANGES)
-    return get_corresponding_files(commit_oid_author_loc, owner, repo, token, Fun.FREQUENT_COLLABORATORS_BY_CHANGES)
+    oid_author_changes_list = fetch_commit_data(owner, repo, token, queried_data, Fun.FREQUENT_COLLABORATORS_BY_CHANGES)
+    return get_corresponding_files(oid_author_changes_list, owner, repo, token, Fun.FREQUENT_COLLABORATORS_BY_CHANGES)
 
+
+def fetch_authors_changes(owner, repo, token):
+    queried_data = """ additions
+                       deletions
+                            author {
+                                name
+                            }"""
+    return fetch_commit_data(owner, repo, token, queried_data, Fun.MOST_CHANGES_PER_COMMIT)

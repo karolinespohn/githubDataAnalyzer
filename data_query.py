@@ -4,6 +4,7 @@ from enum import Enum
 
 class Fun(Enum):
     FREQUENT_COLLABORATORS_BY_COMMITS = 1
+    FREQUENT_COLLABORATORS_BY_CHANGES = 2
 
 
 def fetch_commit_data(owner, repo, token, queried_data, fun):
@@ -15,7 +16,6 @@ def fetch_commit_data(owner, repo, token, queried_data, fun):
         "Authorization": f"bearer {token}",
         "Content-Type": "application/json"
     }
-
 
     while has_next_page:
         cursor = f', after: "{end_cursor}"' if end_cursor else ''
@@ -47,15 +47,17 @@ def fetch_commit_data(owner, repo, token, queried_data, fun):
         if response.status_code == 200:
             data = response.json()
 
-            if data.get("data") and data.get("data").get("repository").get("defaultBranchRef").get("target") is not None:
+            if data.get("data") and \
+                    data.get("data").get("repository").get("defaultBranchRef").get("target") is not None:
 
                 nodes = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).\
                     get("target", {}).get("history", {}).get("edges", {})
 
                 match fun:
-                    case Fun.FREQUENT_COLLABORATORS_BY_COMMITS:
+                    case Fun.FREQUENT_COLLABORATORS_BY_COMMITS | Fun.FREQUENT_COLLABORATORS_BY_CHANGES:
                         for node in nodes:
-                            commit_list.extend([(node.get("node").get("oid"), node.get("node").get("committer").get("name"))])
+                            commit_list.extend([(node.get("node").get("oid"),
+                                                 node.get("node").get("author").get("name"))])
 
                 page_info = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).\
                     get("target", {}).get("history", {}).get("pageInfo")
@@ -72,13 +74,15 @@ def fetch_commit_data(owner, repo, token, queried_data, fun):
     return commit_list
 
 
-def get_corresponding_files(commits, owner, repo, token):
+def get_corresponding_files(commits, owner, repo, token, fun):
     headers = {
         "Authorization": f"bearer {token}",
     }
-    committer_file_list = []
+    commits_with_files = []
 
-    for (sha, committer) in commits:
+    for commit in commits:
+        sha = commit[0]
+        committer = commit[1]
         if committer == "GitHub":  # todo: enable option to include commits by github
             continue
 
@@ -88,19 +92,34 @@ def get_corresponding_files(commits, owner, repo, token):
             commit_data = response.json()
             files = commit_data.get("files", [])
 
-            for file in files:
-                committer_file_list.append((committer, file["filename"]))
+            match fun:
+                case Fun.FREQUENT_COLLABORATORS_BY_COMMITS:
+                    for file in files:
+                        commits_with_files.append((committer, file["filename"]))
+                case Fun.FREQUENT_COLLABORATORS_BY_CHANGES:
+                    for file in files:
+                        commits_with_files.append((committer, file["filename"], file["changes"]))
         else:
             print(f"{response.status_code} Error: {response.text}")
 
-    return committer_file_list
+    return commits_with_files
 
 
-def fetch_commit_oid_author_files(owner, repo, token):
+def fetch_author_files(owner, repo, token):
     queried_data = """oid
-                        committer {
+                        author {
                             name
                         }"""
 
     commit_oid_author = fetch_commit_data(owner, repo, token, queried_data, Fun.FREQUENT_COLLABORATORS_BY_COMMITS)
-    return get_corresponding_files(commit_oid_author, owner, repo, token)
+    return get_corresponding_files(commit_oid_author, owner, repo, token, Fun.FREQUENT_COLLABORATORS_BY_COMMITS)
+
+
+def fetch_author_files_changes(owner, repo, token):
+    queried_data = """oid
+                           author {
+                               name
+                           }"""
+    commit_oid_author_loc = fetch_commit_data(owner, repo, token, queried_data, Fun.FREQUENT_COLLABORATORS_BY_CHANGES)
+    return get_corresponding_files(commit_oid_author_loc, owner, repo, token, Fun.FREQUENT_COLLABORATORS_BY_CHANGES)
+

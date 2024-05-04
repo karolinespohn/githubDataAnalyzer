@@ -1,5 +1,5 @@
 from collections import defaultdict
-from data_query import Fun
+from utils import Fun
 
 
 """

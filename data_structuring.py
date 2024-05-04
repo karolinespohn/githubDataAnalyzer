@@ -19,7 +19,7 @@ def map_file_to_changes_per_person(commits):
 def map_dev_to_avg(commits, fun):
     dev_to_avg_map = defaultdict(lambda: [0, 0, 0.0])  # dev -> changes, commits, average
     summand = 0
-    for commit in commits: # (name, additions, deletions)
+    for commit in commits:  # (name, additions, deletions)
         if fun == Fun.MOST_CHANGES_PER_COMMIT or fun == Fun.LEAST_CHANGES_PER_COMMIT:
             summand = int(commit[1]) + int(commit[2])
         elif fun == Fun.LONGEST_AVG_COMMIT_MESSAGES:
@@ -31,4 +31,3 @@ def map_dev_to_avg(commits, fun):
         entry[2] = entry[0] / entry[1]
 
     return dev_to_avg_map
-

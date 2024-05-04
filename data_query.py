@@ -6,6 +6,7 @@ class Fun(Enum):
     FREQUENT_COLLABORATORS_BY_COMMITS = 1
     FREQUENT_COLLABORATORS_BY_CHANGES = 2
     MOST_CHANGES_PER_COMMIT = 3
+    LEAST_CHANGES_PER_COMMIT = 4
 
 
 def fetch_commit_data(owner, repo, token, queried_data, fun):
@@ -59,7 +60,7 @@ def fetch_commit_data(owner, repo, token, queried_data, fun):
                         for node in nodes:
                             commit_list.extend([(node.get("node").get("oid"),
                                                  node.get("node").get("author").get("name"))])
-                    case Fun.MOST_CHANGES_PER_COMMIT:
+                    case Fun.MOST_CHANGES_PER_COMMIT | Fun.LEAST_CHANGES_PER_COMMIT:
                         for node in nodes:
                             commit_list.extend([(node.get("node").get("author").get("name"),
                                                  node.get("node").get("additions"),

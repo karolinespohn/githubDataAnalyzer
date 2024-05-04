@@ -1,4 +1,5 @@
 from collections import defaultdict
+from data_query import Fun
 
 
 """
@@ -36,40 +37,20 @@ def get_frequent_collaborators(file_to_committers_map):
     return max_pairs
 
 
-def get_dev_with_most_changes_per_commit(dev_to_changes_map):
-    max_changes_per_commit = 0
-    devs_with_most_changes = []
+def get_dev_with_avg_changes_extrema(dev_to_changes_map, fun):
+    extreme_changes_per_commit = 0
+    devs_with_avg_changes_extrema = []
 
     for dev in dev_to_changes_map:
         data = dev_to_changes_map[dev]
         changes = data[2]
-        if int(changes) == max_changes_per_commit:
-            devs_with_most_changes.append(dev)
-        if int(changes) > max_changes_per_commit:
-            max_changes_per_commit = changes
-            devs_with_most_changes = [dev]
+        if int(changes) == extreme_changes_per_commit:
+            devs_with_avg_changes_extrema.append(dev)
+        if (fun == Fun.MOST_CHANGES_PER_COMMIT and int(changes) > extreme_changes_per_commit) or (fun == Fun.LEAST_CHANGES_PER_COMMIT and (int(changes) < extreme_changes_per_commit or extreme_changes_per_commit == 0)):
+            extreme_changes_per_commit = changes
+            devs_with_avg_changes_extrema = [dev]
 
-    if max_changes_per_commit == 0:
+    if extreme_changes_per_commit == 0:
         return None
 
-    return devs_with_most_changes
-
-
-def get_dev_with_least_changes_per_commit(dev_to_changes_map):
-    min_changes_per_commit = -1
-    devs_with_least_changes = []
-
-    for dev in dev_to_changes_map:
-        data = dev_to_changes_map[dev]
-        print(data)
-        changes = data[2]
-        if int(changes) == min_changes_per_commit:
-            devs_with_least_changes.append(dev)
-        if min_changes_per_commit == -1 or int(changes) < min_changes_per_commit:
-            min_changes_per_commit = changes
-            devs_with_least_changes = [dev]
-
-    if min_changes_per_commit == -1:
-        return None
-
-    return devs_with_least_changes
+    return devs_with_avg_changes_extrema

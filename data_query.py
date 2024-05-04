@@ -2,8 +2,6 @@ import requests
 from utils import Fun
 
 
-
-
 def fetch_commit_data(owner, repo, token, queried_data, fun):
     has_next_page = True  # in one query, graphql only returns 100 commits at most, this ensures flipping through pages
     end_cursor = None
@@ -60,6 +58,10 @@ def fetch_commit_data(owner, repo, token, queried_data, fun):
                             commit_list.extend([(node.get("node").get("author").get("name"),
                                                  node.get("node").get("additions"),
                                                  node.get("node").get("deletions"))])
+                    case Fun.LONGEST_AVG_COMMIT_MESSAGES:
+                        for node in nodes:
+                            commit_list.extend([(node.get("node").get("message"),
+                                                 node.get("node").get("author").get("name"))])
 
                 page_info = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).\
                     get("target", {}).get("history", {}).get("pageInfo")
@@ -109,8 +111,8 @@ def get_corresponding_files(commits, owner, repo, token, fun):
 
 def fetch_author_files(owner, repo, token):
     queried_data = """oid
-                        author {
-                            name
+                      author {
+                           name
                         }"""
 
     oid_author_list = fetch_commit_data(owner, repo, token, queried_data, Fun.FREQUENT_COLLABORATORS_BY_COMMITS)
@@ -119,9 +121,9 @@ def fetch_author_files(owner, repo, token):
 
 def fetch_author_files_changes(owner, repo, token):
     queried_data = """oid
-                           author {
-                               name
-                           }"""
+                      author {
+                            name
+                       }"""
     oid_author_changes_list = fetch_commit_data(owner, repo, token, queried_data, Fun.FREQUENT_COLLABORATORS_BY_CHANGES)
     return get_corresponding_files(oid_author_changes_list, owner, repo, token, Fun.FREQUENT_COLLABORATORS_BY_CHANGES)
 
@@ -129,7 +131,15 @@ def fetch_author_files_changes(owner, repo, token):
 def fetch_authors_changes(owner, repo, token):
     queried_data = """ additions
                        deletions
-                            author {
-                                name
-                            }"""
+                       author {
+                            name
+                       }"""
     return fetch_commit_data(owner, repo, token, queried_data, Fun.MOST_CHANGES_PER_COMMIT)
+
+
+def fetch_author_messages(owner, repo, token):
+    queried_data = """ message
+                       author {
+                            name
+                        }"""
+    return fetch_commit_data(owner, repo, token, queried_data, Fun.LONGEST_AVG_COMMIT_MESSAGES)

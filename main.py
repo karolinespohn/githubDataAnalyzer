@@ -6,19 +6,22 @@ import data_structuring
 import data_analysis
 
 
-# todo: expand this to return a list, in order to handle multiple pairs with same amount of commits
-def find_dev_pair(token, owner, repo):
+def find_frequent_collaborators(token, owner, repo):
+    print("-----------------------------------------------------------------------------------------------------------")
     print("Calculating pair of developers contributing most frequently to the same files measured by number of commits")
+    print("-----------------------------------------------------------------------------------------------------------")
     print("Analyzing Data... This may take a while")
 
     commit_oid_author_files = data_query.fetch_commit_oid_author_files(owner, repo, token)
     file_contributors_map = data_structuring.map_file_to_commits_per_person(commit_oid_author_files)
-    max_pair = data_analysis.get_top_contributor_pair(file_contributors_map)
+    max_pairs = data_analysis.get_top_contributor_pair(file_contributors_map)
 
-    if None in max_pair:
+    if len(max_pairs) == 0:
         print("No pair could be found")
     else:
-        print(f"The two developers contributing most frequently to the same files are {max_pair[0]} and {max_pair[1]}")
+        print(f"The pair(s) of developers contributing most frequently to the same files are:")
+        for pair in max_pairs:
+            print(f"{pair[0]} & {pair[1]}")
 
 
 def main(args):

@@ -7,10 +7,10 @@ of their shared commits
 """
 
 
-def get_top_contributor_pair(file_to_committers_map):
+def get_frequent_collaborators(file_to_committers_map):
     dev_pairs = defaultdict(int)
     max_shared_commits = 0
-    max_pair = (None, None)
+    max_pairs = []
 
     for committers in file_to_committers_map.values():
         sorted_committers = sorted(committers.items(), key=lambda x: x[0])
@@ -26,8 +26,11 @@ def get_top_contributor_pair(file_to_committers_map):
 
                 shared_commits = dev_pairs[str(pair)]
 
+                if shared_commits == max_shared_commits:
+                    max_pairs.append(pair)
+
                 if shared_commits > max_shared_commits:
-                    max_pair = pair
+                    max_pairs = [pair]
                     max_shared_commits = shared_commits
 
-    return max_pair
+    return max_pairs

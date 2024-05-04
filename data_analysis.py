@@ -42,7 +42,6 @@ def get_dev_with_most_changes_per_commit(dev_to_changes_map):
 
     for dev in dev_to_changes_map:
         data = dev_to_changes_map[dev]
-        print(data)
         changes = data[2]
         if int(changes) == max_changes_per_commit:
             devs_with_most_changes.append(dev)
@@ -54,3 +53,23 @@ def get_dev_with_most_changes_per_commit(dev_to_changes_map):
         return None
 
     return devs_with_most_changes
+
+
+def get_dev_with_least_changes_per_commit(dev_to_changes_map):
+    min_changes_per_commit = -1
+    devs_with_least_changes = []
+
+    for dev in dev_to_changes_map:
+        data = dev_to_changes_map[dev]
+        print(data)
+        changes = data[2]
+        if int(changes) == min_changes_per_commit:
+            devs_with_least_changes.append(dev)
+        if min_changes_per_commit == -1 or int(changes) < min_changes_per_commit:
+            min_changes_per_commit = changes
+            devs_with_least_changes = [dev]
+
+    if min_changes_per_commit == -1:
+        return None
+
+    return devs_with_least_changes

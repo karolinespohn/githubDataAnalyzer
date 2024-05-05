@@ -40,7 +40,7 @@ def option_parsing(args):
 
 
 if __name__ == '__main__':
-    ana_help_string = f"""Analysis to be performed:
+    ana_help_string = f"""Specifies which of the following analyses is to be performed:
                       1: Find pair(s) of developers who most frequently commit to the same files
                       2: Find pair(s) of developers who most contribute the largest amount of code to the same files
                       3: Find developer with the largest commits 

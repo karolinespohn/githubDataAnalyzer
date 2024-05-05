@@ -43,7 +43,7 @@ def fetch_commit_data(owner, repo, token, queried_data, fun):
             data = response.json()
 
             if data.get("data") and \
-                    data.get("data").get("repository").get("defaultBranchRef").get("target") is not None:
+                    data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).get("target", {}) is not None:
 
                 nodes = data.get("data", {}).get("repository", {}).get("defaultBranchRef", {}).\
                     get("target", {}).get("history", {}).get("edges", {})
@@ -87,7 +87,7 @@ def get_corresponding_files(commits, owner, repo, token, fun):
     for commit in commits:
         sha = commit[0]
         committer = commit[1]
-        if committer == "GitHub":  # todo: enable option to include commits by github
+        if committer == "GitHub":
             continue
 
         response = requests.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{sha}", headers=headers)

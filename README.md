@@ -13,4 +13,4 @@ pip install -r requirements.txt
 python3 main.py —url <repo_url> —ana <type_of_analysis_to_perform>
 ```
 
-Have fun! ?
+Have fun!

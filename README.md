@@ -7,6 +7,7 @@ This is a CLI tool to analyze data from github repositories.
 - 4: Find developer with the smallest commits 
 - 5: Find developer with the longest commit messages
 # Build Instructions
+- paste your api key into a .env file
 - execute the following commands:
 ```
 pip install -r requirements.txt

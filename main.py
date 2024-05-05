@@ -32,15 +32,24 @@ def option_parsing(args):
     try:
         owner = url_components[url_components.index("github.com") + 1]
         repo = url_components[url_components.index("github.com") + 2]
-
+        if len(repo) > 5 and repo[len(repo) - 4:len(repo)] == ".git":
+            repo = repo[0:len(repo) - 4]
         return owner, repo, fun
     except IndexError:
         print("URL of repository is invalid")
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Find devs contributing most frequently to the same files")
+    ana_help_string = f"""Analysis to be performed:
+                      1: Find pair(s) of developers who most frequently commit to the same files
+                      2: Find pair(s) of developers who most contribute the largest amount of code to the same files
+                      3: Find developer with the largest commits 
+                      4: Find developer with the smallest commits
+                      5: Find developer with the longest commit messages"""
+
+    parser = argparse.ArgumentParser(description="Find devs contributing most frequently to the same files",
+                                     formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--url", required=True, help="URL of the GitHub repository")
-    parser.add_argument("--ana", required=True, help="Analysis to be performed")
+    parser.add_argument("--ana", required=True, help=ana_help_string)
 
     main(parser.parse_args())
